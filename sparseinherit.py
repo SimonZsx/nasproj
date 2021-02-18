@@ -8,9 +8,6 @@ import warnings
 import copy
 from loss import *
 
-from threading import Thread, Lock
-
-
 import torch
 import torch.nn as nn
 import torch.nn.parallel
@@ -123,24 +120,11 @@ def main():
 ########Define hook##################
 activation_out = {}
 activation_in = {}
-index_ = 0
-mutex_ = Lock()
-
 def get_activation(name):
     def hook(model, input_, output_):
-        global index_
-        global mutex_
-
-        mutex_.acquire()
-        index = index_
-        index_ = index_+1
-        mutex_.release()
-        #print("input size and type"+str(input_[0].size()))
+        #print("input size and type"+str(output_))
         activation_in[name] = input_[0].detach()
-        path = 'data/'
-        torch.save(activation_in[name], path+'input'+str(index)+'.pt')
         activation_out[name] = output_.detach()
-        torch.save(activation_out[name], path+'output'+str(index)+'.pt')
     return hook
 ####################################
 
@@ -379,8 +363,9 @@ def train(train_loader, model, model2,  modeltrain, criterion, criteriontrain, o
             endtoend = model2(images)
 
         # train the graft
-        output = modeltrain(activation_in['layer1'].cuda())
-        loss = criteriontrain(output, activation_out['layer1'].cuda())
+        if i % 5 == 0 :
+            output = modeltrain(activation_in['layer1'].cuda())
+            loss = criteriontrain(output, activation_out['layer1'].cuda())
 
         # measure accuracy and record loss
         acc1, acc5 = accuracy(endtoend, target, topk=(1, 5))
@@ -389,9 +374,10 @@ def train(train_loader, model, model2,  modeltrain, criterion, criteriontrain, o
         top5.update(acc5[0], images.size(0))
 
         # compute gradient and do SGD step
-        optimizertrain.zero_grad()
-        loss.backward()
-        optimizertrain.step()
+        if i % 5 == 0 :
+            optimizertrain.zero_grad()
+            loss.backward()
+            optimizertrain.step()
 
         # measure elapsed time
         batch_time.update(time.time() - end)
