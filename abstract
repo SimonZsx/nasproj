@@ -1,0 +1,13 @@
+
+Wireless multi-robot systems deployed with online learning services require low end-to-end latency for cooperative perceptions and coordinated actions among robots, as well as high throughput for synchronizing learned parameters from each robot. In such systems, bandwidth-hungry traffics coexist with latency-sensitive ones. Despite much effort in pursuing low-latency communications over wireless links, existing systems either fail to meet the low-latency requirements, or sacrifice bandwidth. The key reason is that when bandwidth-hungry traffics exist, latency-sensitive
+traffics suffer from the head-of-line (HOL) blocking problem in wireless network interface controller (WNIC) queues.
+
+
+We propose XXX, a transparent and automatic system for ensuring service level agreements (SLA) in
+wireless multi-robot systems. XXX can enforce configurable SLA which describes the latency requirements of
+different flows. XXX can satisfy customized Service-Level Agreements (SLAs) that describe various latency
+and throughput requirements with theoretical guarantees. To enforce the SLA, XXX leverages the fact that
+most of the latency-sensitive flows in multi-robot systems transmit periodically. By predicting the time point
+of each transmission and limiting the numbers of packets in the NIC queues dynamically, XXX protects the
+latency-sensitive flows against the HOL blocking problem while allowing bandwidth-hungry traffic to run as
+fast as possible.

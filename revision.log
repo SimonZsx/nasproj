@@ -1,0 +1,45 @@
+nvidia-docker run -d -v /home/ml/gnmt:/home/ml/gnmt --net=host --shm-size 16g translation /bin/bash -c 'export NCCL_SOCKET_IFNAME=enp216s0; cp /home/ml/gnmt/runtime/launch.py /home/ml/gnmt/runtime/translation;  cd /home/ml/gnmt/runtime/translation; python -m launch --nnodes 2 --node_rank 1 --nproc_per_node 4 main_with_runtime.py --data_dir /home/ml/gnmt/data/wmt_ende/ --master_addr localhost --module models.gnmt_large.gpus=8 --checkpoint_dir /home/ml/gnmt/output --distributed_backend nccl  -b 64 --lr 0.000300 --lr_policy polynomial --weight-decay 0.000000 --epochs 10 --print-freq 100 --verbose 0 --num_ranks_in_server 4 --config_path models/gnmt_large/gpus=8/mp_conf.json 2>&1 | tee /home/ml/gnmt/output/output.log.1; rm launch.py'
+
+
+python3 driver.py --config_file configs/bert_4gpipe.yml
+
+
+
+nvidia-docker run -it --rm -v $(dirname $PWD):/workspace -v ${PWD}:/workspace/bert --net=host --shm-size 16g bert /bin/bash -c 'cp ../launch.py .; python -m launch --nnodes 1 --node_rank 0 --nproc_per_node 4 main_with_runtime.py --data_dir data/hdf5_lower_case_1_seq_len_128_max_pred_20_masked_lm_prob_0.15_random_seed_12345_dupe_factor_5/bookscorpus --master_addr localhost --module vgpus=4 --checkpoint_dir output/2021-01-26T17:19:54 --partition vgpus=4/gpipe.json --sync_mode bsp --distributed_backend gloo  -b 16 --lr 0.050000 --lr_policy polynomial --weight-decay 0.000000 --epochs 40 --print-freq 100 --verbose 0 --num_ranks_in_server 4 --config_path vgpus=4/mp_conf.json 2>&1 | tee output/2021-01-26T17:19:54/output.log.0; rm launch.py'
+
+
+nvidia-docker run -it --rm -v /home/ml/vpipe:/workspace --net=host --shm-size 16g bert /bin/bash
+
+nvidia-docker run -it --rm -v /home/shixiong/vpipe:/workspace --net=host --shm-size 16g bert /bin/bash
+
+python -m launch --nnodes 1 --node_rank 0 --nproc_per_node 4 main_with_runtime.py --data_dir data/hdf5_lower_case_1_seq_len_128_max_pred_20_masked_lm_prob_0.15_random_seed_12345_dupe_factor_5/bookscorpus --master_addr localhost --module vgpus=4 --checkpoint_dir output/revision --partition vgpus=4/gpipe.json --sync_mode bsp --distributed_backend gloo  -b 16 --lr 0.050000 --lr_policy polynomial --weight-decay 0.000000 --epochs 40 --print-freq 100 --verbose 0 --num_ranks_in_server 4 --config_path vgpus=4/mp_conf.json
+
+
+
+nsys profile --trace=cuda,nvtx -d 240 --sample=none python -m launch --nnodes 1 --node_rank 0 --nproc_per_node 4 main_with_runtime.py --data_dir data/hdf5_lower_case_1_seq_len_128_max_pred_20_masked_lm_prob_0.15_random_seed_12345_dupe_factor_5/bookscorpus --master_addr localhost --module vgpus=4 --checkpoint_dir output/revision --partition vgpus=4/gpipe.json --sync_mode bsp --distributed_backend gloo  -b 16 --lr 0.050000 --lr_policy polynomial --weight-decay 0.000000 --epochs 40 --print-freq 100 --verbose 0 --num_ranks_in_server 4 --config_path vgpus=4/mp_conf.json
+
+
+nsys profile --trace=cuda,nvtx -d 240 --sample=none python3 driver.py --config_file configs/bert_4gpipe.yml
+
+
+compress
+tar -czvf name-of-archive.tar.gz /path/to/directory-or-file
+
+extract
+tar -xzvf name-of-archive.tar.gz
+
+
+
+/opt/nvidia/nsight-systems-cli/2019.6.1:/opt/nvidia/nsight-systems/2019.6.1:ro
+
+
+nvidia-docker run -it -v /home/shixiong/vpipe:/workspace -v /opt/nvidia/nsight-systems-cli/2019.6.1:/opt/nvidia/nsight-systems/2019.6.1:ro --net=host --shm-size 16g bert /bin/bash
+
+
+/opt/nvidia/nsight-systems/2019.6.1/bin/nsys profile --trace=cuda,nvtx -d 240 --sample=none python -m launch --nnodes 1 --node_rank 0 --nproc_per_node 4 main_with_runtime.py --data_dir data/hdf5_lower_case_1_seq_len_128_max_pred_20_masked_lm_prob_0.15_random_seed_12345_dupe_factor_5/bookscorpus --master_addr localhost --module vgpus=4 --checkpoint_dir output/revision --partition vgpus=4/gpipe.json --sync_mode bsp --distributed_backend gloo  -b 16 --lr 0.050000 --lr_policy polynomial --weight-decay 0.000000 --epochs 40 --print-freq 100 --verbose 0 --num_ranks_in_server 4 --config_path vgpus=4/mp_conf.json
+
+
+ scp shixiong@202.45.128.182:/home/shixiong/vpipe/runtime/bert/report3.qdstrm .
+
+runtime modeling 
+m i dependency  dependent
