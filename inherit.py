@@ -338,9 +338,10 @@ def train(train_loader, model, model2,  modeltrain, criterion, criteriontrain, o
     losses = AverageMeter('Loss', ':.4e')
     top1 = AverageMeter('Acc@1', ':6.2f')
     top5 = AverageMeter('Acc@5', ':6.2f')
+    graft_time = AverageMeter('graft train', ':6.3f')
     progress = ProgressMeter(
         len(train_loader),
-        [batch_time, data_time, losses, top1, top5],
+        [batch_time, data_time, losses, top1, top5, graft_time],
         prefix="Epoch: [{}]".format(epoch))
 
     # switch to train mode
@@ -363,9 +364,10 @@ def train(train_loader, model, model2,  modeltrain, criterion, criteriontrain, o
             endtoend = model2(images)
 
         # train the graft
+        start_ = time.time()
         output = modeltrain(activation_in['layer1'].cuda())
         loss = criteriontrain(output, activation_out['layer1'].cuda())
-
+        fwd = time.time() - start_
         # measure accuracy and record loss
         acc1, acc5 = accuracy(endtoend, target, topk=(1, 5))
         losses.update(loss.item(), images.size(0))
@@ -373,9 +375,13 @@ def train(train_loader, model, model2,  modeltrain, criterion, criteriontrain, o
         top5.update(acc5[0], images.size(0))
 
         # compute gradient and do SGD step
+        start_ = time.time()
         optimizertrain.zero_grad()
         loss.backward()
         optimizertrain.step()
+        bwd = time.time() - start_
+
+        graft_time.update(fwd+bwd)
 
         # measure elapsed time
         batch_time.update(time.time() - end)
